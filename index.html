@@ -709,10 +709,10 @@ const INIT_MEMBERS=[
   {id:16,name:'Muaaz Patelia', role:'Rescuer',                phone:'+27677936841',certs:['Certified Mountain & Rope Rescuer','First Aid Level 3']},
   {id:17,name:'Burhaan Carrim',role:'Rescuer',                phone:'+27662900294',certs:['Certified Mountain & Rope Rescuer']},
   {id:18,name:'Hamza Ali',     role:'Rescuer',                phone:'+27743488945',certs:['Certified Mountain & Rope Rescuer',"Driver's Licence"]},
-  {id:19,name:'Ishaaq Bhayat', role:'Rescuer',                phone:'+27609058683',certs:['Certified Mountain & Rope Rescuer','First Aid Level 3',"Driver's Licence"]},
-  {id:20,name:'Riyaad Surtee', role:'Rescuer / Diver',       phone:'+27632446925',certs:['Certified Mountain & Rope Rescuer',"Driver's Licence",'Certified Open Water Diver']},
-  {id:21,name:'Zaheer Pahad',  role:'Director',               phone:'+27845483848',certs:[]},
-  {id:22,name:'Azhar Vadi',    role:'Director',               phone:'+27817064622',certs:[]},
+  {id:19,name:'Ishaaq Bhayat', role:'Trainer / Rescuer',      phone:'+27609058683',certs:['Mountain & Rope Rescue Trainer','Certified Mountain & Rope Rescuer','First Aid Level 3',"Driver's Licence"]},
+  {id:20,name:'Riyaad Surtee', role:'Rescuer / Diver',        phone:'+27632446925',certs:['Certified Mountain & Rope Rescuer',"Driver's Licence",'Certified Open Water Diver']},
+  {id:21,name:'Zaheer Pahad',  role:'Director',               phone:'+27845483848',certs:["Driver's Licence"]},
+  {id:22,name:'Azhar Vadi',    role:'Director',               phone:'+27817064622',certs:["Code 14 Driver's Licence"]},
 ];
 
 const INIT_SESSIONS=[
@@ -826,8 +826,8 @@ const DEFAULTS={
   attendance:INIT_ATTENDANCE,
 };
 
-let S=JSON.parse(localStorage.getItem('sfsar_v7')||'null')||JSON.parse(JSON.stringify(DEFAULTS));
-const save=()=>localStorage.setItem('sfsar_v7',JSON.stringify(S));
+let S=JSON.parse(localStorage.getItem('sfsar_v8')||'null')||JSON.parse(JSON.stringify(DEFAULTS));
+const save=()=>localStorage.setItem('sfsar_v8',JSON.stringify(S));
 
 // ══════════════════════════════════════
 //  PAGE SWITCHING
