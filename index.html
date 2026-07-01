@@ -27,6 +27,13 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
 .org-sub{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase;}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
 #liveClock{font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.4);}
+.fb-status{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.5px;padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.fb-status::before{content:'';width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.fb-status.online{background:rgba(45,156,90,0.18);color:#5fd88a;}
+.fb-status.online::before{background:#3ecf6e;box-shadow:0 0 6px #3ecf6e;animation:fbpulse 1.8s infinite;}
+.fb-status.offline{background:rgba(192,57,43,0.18);color:#ef7b6f;}
+.fb-status.offline::before{background:#e05545;}
+@keyframes fbpulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
 
 .active-mission-trigger{background:var(--red);color:white;border:none;padding:7px 14px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:0.5px;animation:redpulse 2s infinite;}
 @keyframes redpulse{0%,100%{opacity:1;}50%{opacity:0.75;}}
@@ -420,6 +427,7 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
     <div class="logo-mark">SF</div>
     <div><div class="org-name">Salaam Foundation</div><div class="org-sub">SAR Team Hub</div></div>
     <div class="topbar-right">
+      <span class="fb-status offline" id="fbStatus">Connecting…</span>
       <span id="liveClock"></span>
       <button class="active-mission-trigger" onclick="showActiveMission()">🚨 ACTIVE MISSION</button>
     </div>
@@ -440,7 +448,10 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
     <div class="stats-row" id="missionStats"></div>
     <div class="section-header">
       <div><div class="section-title">Mission Log</div><div class="section-sub">All incident responses and operations</div></div>
-      <button class="btn" onclick="openModal('missionModal')">+ Log Mission</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn secondary" onclick="openModal('importMissionModal')">📋 Quick Import</button>
+        <button class="btn" onclick="openModal('missionModal')">+ Log Mission</button>
+      </div>
     </div>
     <div id="missionList"></div>
   </div>
@@ -478,7 +489,10 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
     <div class="stats-row" id="hoursStats"></div>
     <div class="section-header">
       <div><div class="section-title">Hours & Attendance</div><div class="section-sub">Leader can override any absence with excused status and a reason</div></div>
-      <button class="btn" id="logSessionBtn">+ Log Session</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn secondary" onclick="openModal('importSessionModal')">📋 Quick Import</button>
+        <button class="btn" id="logSessionBtn">+ Log Session</button>
+      </div>
     </div>
     <div class="card" style="margin-bottom:20px">
       <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:14px">🏆 Participation Leaderboard</div>
@@ -589,6 +603,7 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
   <div class="am-header">
     <button class="am-back" onclick="hideActiveMission()">&#8592; Back</button>
     <div class="am-header-title">🚨 Active Mission</div>
+    <span class="fb-status offline" id="fbStatusAm">Connecting…</span>
     <div class="am-clock" id="amClock"></div>
   </div>
 
@@ -649,6 +664,57 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
   <div class="modal-actions"><button class="btn secondary" onclick="closeModal('missionModal')">Cancel</button><button class="btn" onclick="saveMission()">Save</button></div>
 </div></div>
 
+<div class="modal-overlay" id="importMissionModal"><div class="modal">
+  <h2>Quick Import Mission(s)</h2>
+  <p style="font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.6">
+    Tell Claude what happened — dates, who was involved, what was done — in the chat.
+    Claude will hand you back a code block like the example below. Paste it here and hit Import.
+    Works for one mission or several at once.
+  </p>
+  <div class="form-group">
+    <textarea id="im_json" rows="10" style="font-family:'DM Mono',monospace;font-size:12px" placeholder='{
+  "name": "Mission name",
+  "date": "2026-06-30",
+  "type": "Mountain Rescue",
+  "outcome": "success",
+  "location": "Where it happened",
+  "agencies": "Other agencies involved",
+  "hours": 4,
+  "notes": "Full narrative..."
+}'></textarea>
+  </div>
+  <p style="font-size:11px;color:var(--ink3);margin-top:-8px">
+    outcome must be one of: success · partial · support · training
+  </p>
+  <div class="modal-actions"><button class="btn secondary" onclick="closeModal('importMissionModal')">Cancel</button><button class="btn" onclick="importMissions()">Import</button></div>
+</div></div>
+
+<div class="modal-overlay" id="importSessionModal"><div class="modal">
+  <h2>Quick Import Session &amp; Attendance</h2>
+  <p style="font-size:13px;color:var(--ink2);margin-bottom:14px;line-height:1.6">
+    Give Claude the date, what happened, and who was there with their times.
+    Claude will hand you back a code block like the example below. Paste it here and hit Import.
+    Anyone not listed in "attendance" is marked absent.
+  </p>
+  <div class="form-group">
+    <textarea id="is_json" rows="12" style="font-family:'DM Mono',monospace;font-size:12px" placeholder='{
+  "name": "Session name",
+  "date": "2026-06-22",
+  "type": "mission",
+  "hours": 9,
+  "attendance": [
+    { "member": "Sa\'ad Bamath", "hours": 9 },
+    { "member": "Riyaad Surtee", "hours": 9 },
+    { "member": "Hamza Norath", "hours": 6 }
+  ]
+}'></textarea>
+  </div>
+  <p style="font-size:11px;color:var(--ink3);margin-top:-8px">
+    type must be one of: mission · training · meeting · other. "hours" at the top level is the default duration; per-person "hours" overrides it for that person.
+  </p>
+  <div class="modal-actions"><button class="btn secondary" onclick="closeModal('importSessionModal')">Cancel</button><button class="btn" onclick="importSession()">Import</button></div>
+</div></div>
+
 <div class="modal-overlay" id="gearModal"><div class="modal">
   <h2>Add Gear Item</h2>
   <div class="form-group"><label>Item Name</label><input type="text" id="g_name"></div>
@@ -693,6 +759,8 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
   <div class="modal-actions"><button class="btn secondary" onclick="closeModal('excuseModal')">Cancel</button><button class="btn amber-btn" onclick="saveExcuse()">Save Override</button></div>
 </div></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 // ══════════════════════════════════════
 //  DATA
@@ -757,6 +825,7 @@ const INIT_ATTENDANCE={
 
 const DEFAULTS={
   nextId:600,
+  gearVersion:1,
   missions:[
     {id:1,name:'Zaheer Seedat Search — Oupa Fats Wetland',date:'2025-02-06',type:'Missing Person',outcome:'support',location:'Oupa Fats Wetland, Lenasia',agencies:'SAPS K-9 SAR, COJ Aquatic Rescue Unit, SAPS Air Wing Pretoria',hours:61.5,notes:'Multi-day search (Feb 6–15, 2025) for Zaheer Seedat, 47. Dense reeds, 5 dams, swamp terrain. Body located via thermal drone at 2:45am Feb 15 — SAPS divers recovered the deceased. Team operated in coordination and perimeter support role. Key gap: team not trained for wetland entry. Swift water training flagged as priority.'},
     {id:2,name:'Hekpoort Waterfall Rescue — Jamlat Student Uwais',date:'2024-10-19',type:'Mountain Rescue',outcome:'success',location:'Hekpoort Waterfall / Castle Gorge, Magalies',agencies:'MSAR (Mountain SAR), Gauteng Emergency Services Paramedics',hours:19,notes:'Rescue of a Jamlat student (Uwais) who was critically injured after a waterfall pool jump went wrong near Hekpoort. The jump was mis-calculated and he landed badly, leaving him in severe pain several kilometres from the nearest road. A helicopter was available but nightfall and confined terrain ruled it out. Salaam Foundation joined as second-wave rescuers alongside MSAR and GES paramedics. The student was placed in a vacuum mattress and secured in a wilderness stretcher. The most challenging section was moving the stretcher over the waterfall outflow using ropes. The rough 4x4 road caused too much pain, so the team carried him approximately 4km on foot to reach the waiting ambulance. He was admitted to hospital early morning — around 12 hours after the injury. Successful rescue.'},
@@ -826,8 +895,74 @@ const DEFAULTS={
   attendance:INIT_ATTENDANCE,
 };
 
-let S=JSON.parse(localStorage.getItem('sfsar_v8')||'null')||JSON.parse(JSON.stringify(DEFAULTS));
-const save=()=>localStorage.setItem('sfsar_v8',JSON.stringify(S));
+// ══════════════════════════════════════
+//  FIREBASE — shared live database
+// ══════════════════════════════════════
+firebase.initializeApp({
+  databaseURL:'https://salaam-sar-default-rtdb.europe-west1.firebasedatabase.app'
+});
+const fbdb=firebase.database();
+const stateRef=fbdb.ref('state');
+const GEAR_VERSION=DEFAULTS.gearVersion;
+
+let S=JSON.parse(JSON.stringify(DEFAULTS));
+let fbReady=false;
+
+function save(){
+  if(!fbReady)return;
+  stateRef.set(S);
+}
+
+function renderCurrent(){
+  const activeContent=document.querySelector('.content.active');
+  const tab=activeContent?activeContent.id.replace('tab-',''):'missions';
+  ({
+    missions:renderMissions,
+    gear:renderGear,
+    training:renderTraining,
+    hours:renderHours,
+    planner:renderPlanner,
+    incident:()=>{initIncidentMemberSelect();previewReport();},
+    matrix:renderMatrix
+  }[tab]||renderMissions)();
+  if(document.getElementById('activeMissionPage').style.display==='block'){
+    renderComms();renderResources();renderLog();
+  }
+}
+
+stateRef.on('value',snap=>{
+  const val=snap.val();
+  if(val===null){
+    // Fresh database — seed it once
+    S=JSON.parse(JSON.stringify(DEFAULTS));
+    S.seeded=true;
+    fbReady=true;
+    stateRef.set(S);
+    renderCurrent();
+    return;
+  }
+  S=val;
+  if(S.gearVersion!==GEAR_VERSION){
+    // Inventory has been updated in code since this DB was seeded — refresh gear list
+    S.gear=JSON.parse(JSON.stringify(DEFAULTS.gear));
+    S.gearVersion=GEAR_VERSION;
+    fbReady=true;
+    stateRef.set(S);
+    return;
+  }
+  fbReady=true;
+  renderCurrent();
+});
+
+// Connection status indicator (topbar + active mission header)
+fbdb.ref('.info/connected').on('value',snap=>{
+  const isLive=snap.val()===true;
+  [document.getElementById('fbStatus'),document.getElementById('fbStatusAm')].forEach(el=>{
+    if(!el)return;
+    el.textContent=isLive?'🔥 Live':'⚠ Offline';
+    el.className='fb-status '+(isLive?'online':'offline');
+  });
+});
 
 // ══════════════════════════════════════
 //  PAGE SWITCHING
@@ -900,6 +1035,46 @@ function saveMission(){
   ['m_name','m_date','m_location','m_agencies','m_hours','m_notes'].forEach(id=>document.getElementById(id).value='');
 }
 function deleteMission(id){if(!confirm('Delete?'))return;S.missions=S.missions.filter(m=>m.id!==id);save();renderMissions();}
+
+const VALID_OUTCOMES=['success','partial','support','training'];
+function importMissions(){
+  const raw=document.getElementById('im_json').value.trim();
+  if(!raw)return alert('Paste the mission JSON first.');
+  let parsed;
+  try{parsed=JSON.parse(raw);}
+  catch(e){return alert('That doesn\'t look like valid JSON. Ask Claude to re-send it, or check for a missing comma/bracket.\n\n'+e.message);}
+  const list=Array.isArray(parsed)?parsed:[parsed];
+  if(!list.length)return alert('No missions found in that JSON.');
+  const errors=[];
+  const toAdd=list.map((m,i)=>{
+    if(!m||typeof m!=='object'||!m.name||!String(m.name).trim()){
+      errors.push(`Entry ${i+1}: missing "name"`);return null;
+    }
+    let outcome=(m.outcome||'success').toLowerCase();
+    if(!VALID_OUTCOMES.includes(outcome)){
+      errors.push(`Entry ${i+1} ("${m.name}"): outcome "${m.outcome}" isn't valid — defaulted to "success"`);
+      outcome='success';
+    }
+    return{
+      id:S.nextId++,
+      name:String(m.name).trim(),
+      date:m.date||new Date().toISOString().slice(0,10),
+      type:m.type||'Other',
+      outcome,
+      location:m.location||'',
+      agencies:m.agencies||'',
+      hours:parseFloat(m.hours)||0,
+      notes:m.notes||''
+    };
+  }).filter(Boolean);
+  if(!toAdd.length)return alert('Nothing valid to import:\n\n'+errors.join('\n'));
+  toAdd.forEach(m=>S.missions.push(m));
+  save();
+  closeModal('importMissionModal');
+  document.getElementById('im_json').value='';
+  renderMissions();
+  if(errors.length)alert(`Imported ${toAdd.length} mission(s), with notes:\n\n`+errors.join('\n'));
+}
 
 // ══════════════════════════════════════
 //  GEAR
@@ -1074,6 +1249,48 @@ function saveExcuse(){
 }
 document.getElementById('logSessionBtn').onclick=openSessionModal;
 
+const SESSION_TYPES=['mission','training','meeting','other'];
+function findMemberByName(name){
+  if(!name)return null;
+  const n=String(name).trim().toLowerCase();
+  return S.members.find(m=>m.name.toLowerCase()===n)
+      || S.members.find(m=>m.name.toLowerCase().includes(n))
+      || S.members.find(m=>n.includes(m.name.toLowerCase()))
+      || null;
+}
+function importSession(){
+  const raw=document.getElementById('is_json').value.trim();
+  if(!raw)return alert('Paste the session JSON first.');
+  let parsed;
+  try{parsed=JSON.parse(raw);}
+  catch(e){return alert('That doesn\'t look like valid JSON. Ask Claude to re-send it, or check for a missing comma/bracket.\n\n'+e.message);}
+  if(!parsed||typeof parsed!=='object'||!parsed.name||!String(parsed.name).trim())return alert('Missing "name" for the session.');
+
+  const defaultHours=parseFloat(parsed.hours)||0;
+  const type=SESSION_TYPES.includes(parsed.type)?parsed.type:'mission';
+  const attList=Array.isArray(parsed.attendance)?parsed.attendance:[];
+  const notFound=[];
+
+  const rec={};
+  S.members.forEach(m=>{rec[m.id]={status:'absent',note:'',ih:0};});
+  attList.forEach(a=>{
+    if(!a||!a.member)return;
+    const m=findMemberByName(a.member);
+    if(!m){notFound.push(a.member);return;}
+    const ih=(a.hours!==undefined&&a.hours!==null&&!isNaN(parseFloat(a.hours)))?parseFloat(a.hours):defaultHours;
+    rec[m.id]={status:'present',note:'',ih};
+  });
+
+  const sid=S.nextId++;
+  S.sessions.push({id:sid,name:String(parsed.name).trim(),date:parsed.date||new Date().toISOString().slice(0,10),type,hours:defaultHours});
+  S.attendance[sid]=rec;
+  save();
+  closeModal('importSessionModal');
+  document.getElementById('is_json').value='';
+  renderHours();
+  if(notFound.length)alert('Session imported, but couldn\'t match these names to a team member (left as absent):\n\n'+notFound.join('\n'));
+}
+
 // ══════════════════════════════════════
 //  ACTIVE MISSION — COMMS
 // ══════════════════════════════════════
@@ -1095,8 +1312,14 @@ function renderComms(){
 // ══════════════════════════════════════
 //  ACTIVE MISSION — RESOURCES
 // ══════════════════════════════════════
-function getResources(){return JSON.parse(localStorage.getItem('sfsar_resources')||'[]');}
-function saveResources(r){localStorage.setItem('sfsar_resources',JSON.stringify(r));}
+let _resources=[];
+const resourcesRef=fbdb.ref('resources');
+function getResources(){return _resources;}
+function saveResources(r){_resources=r;resourcesRef.set(r);}
+resourcesRef.on('value',snap=>{
+  _resources=snap.val()||[];
+  if(document.getElementById('activeMissionPage').style.display==='block')renderResources();
+});
 
 function renderResources(){
   const resources=getResources();
@@ -1123,8 +1346,14 @@ document.getElementById('newResourceInput').addEventListener('keydown',e=>{if(e.
 // ══════════════════════════════════════
 //  ACTIVE MISSION — LOGBOOK
 // ══════════════════════════════════════
-function getLogs(){return JSON.parse(localStorage.getItem('sfsar_logbook')||'[]');}
-function saveLogs(l){localStorage.setItem('sfsar_logbook',JSON.stringify(l));}
+let _logs=[];
+const logsRef=fbdb.ref('logbook');
+function getLogs(){return _logs;}
+function saveLogs(l){_logs=l;logsRef.set(l);}
+logsRef.on('value',snap=>{
+  _logs=snap.val()||[];
+  if(document.getElementById('activeMissionPage').style.display==='block')renderLog();
+});
 
 function renderLog(){
   const logs=getLogs();
@@ -1147,10 +1376,21 @@ function autoResizeLog(el){el.style.height='auto';el.style.height=Math.min(el.sc
 // ══════════════════════════════════════
 //  TRAINING PLANNER
 // ══════════════════════════════════════
-function getPlanSessions(){return JSON.parse(localStorage.getItem('sfsar_plan')||'[]');}
-function savePlanSessions(d){localStorage.setItem('sfsar_plan',JSON.stringify(d));}
-function getRsvps(){return JSON.parse(localStorage.getItem('sfsar_rsvp')||'{}');}
-function saveRsvps(d){localStorage.setItem('sfsar_rsvp',JSON.stringify(d));}
+let _planSessions=[],_rsvps={};
+const planRef=fbdb.ref('planner');
+const rsvpRef=fbdb.ref('rsvps');
+function getPlanSessions(){return _planSessions;}
+function savePlanSessions(d){_planSessions=d;planRef.set(d);}
+function getRsvps(){return _rsvps;}
+function saveRsvps(d){_rsvps=d;rsvpRef.set(d);}
+planRef.on('value',snap=>{
+  _planSessions=snap.val()||[];
+  if(document.getElementById('tab-planner')?.classList.contains('active'))renderPlanner();
+});
+rsvpRef.on('value',snap=>{
+  _rsvps=snap.val()||{};
+  if(document.getElementById('tab-planner')?.classList.contains('active'))renderPlanner();
+});
 
 let planFilter='all';
 function setPlanFilter(f,el){
@@ -1374,6 +1614,8 @@ function switchTab(tab,el){
 // ══════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════
+// Initial render happens once Firebase's stateRef listener fires (see above);
+// render once immediately too so the UI isn't blank while the connection opens.
 renderMissions();
 </script>
 </body>
