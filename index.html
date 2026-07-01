@@ -828,7 +828,7 @@ const DEFAULTS={
   gearVersion:1,
   missions:[
     {id:1,name:'Zaheer Seedat Search — Oupa Fats Wetland',date:'2025-02-06',type:'Missing Person',outcome:'support',location:'Oupa Fats Wetland, Lenasia',agencies:'SAPS K-9 SAR, COJ Aquatic Rescue Unit, SAPS Air Wing Pretoria',hours:61.5,notes:'Multi-day search (Feb 6–15, 2025) for Zaheer Seedat, 47. Dense reeds, 5 dams, swamp terrain. Body located via thermal drone at 2:45am Feb 15 — SAPS divers recovered the deceased. Team operated in coordination and perimeter support role. Key gap: team not trained for wetland entry. Swift water training flagged as priority.'},
-    {id:2,name:'Hekpoort Waterfall Rescue — Jamlat Student Uwais',date:'2024-10-19',type:'Mountain Rescue',outcome:'success',location:'Hekpoort Waterfall / Castle Gorge, Magalies',agencies:'MSAR (Mountain SAR), Gauteng Emergency Services Paramedics',hours:19,notes:'Rescue of a Jamlat student (Uwais) who was critically injured after a waterfall pool jump went wrong near Hekpoort. The jump was mis-calculated and he landed badly, leaving him in severe pain several kilometres from the nearest road. A helicopter was available but nightfall and confined terrain ruled it out. Salaam Foundation joined as second-wave rescuers alongside MSAR and GES paramedics. The student was placed in a vacuum mattress and secured in a wilderness stretcher. The most challenging section was moving the stretcher over the waterfall outflow using ropes. The rough 4x4 road caused too much pain, so the team carried him approximately 4km on foot to reach the waiting ambulance. He was admitted to hospital early morning — around 12 hours after the injury. Successful rescue.'},
+    {id:2,name:'Hekpoort Waterfall Rescue — Jamiat Student Uwais',date:'2024-10-19',type:'Mountain Rescue',outcome:'success',location:'Hekpoort Waterfall / Castle Gorge, Magalies',agencies:'MSAR (Mountain SAR), Gauteng Emergency Services Paramedics',hours:19,notes:'Rescue of a Jamiat student (Uwais) who was critically injured after a waterfall pool jump went wrong near Hekpoort. The jump was mis-calculated and he landed badly, leaving him in severe pain several kilometres from the nearest road. A helicopter was available but nightfall and confined terrain ruled it out. Salaam Foundation joined as second-wave rescuers alongside MSAR and GES paramedics. The student was placed in a vacuum mattress and secured in a wilderness stretcher. The most challenging section was moving the stretcher over the waterfall outflow using ropes. The rough 4x4 road caused too much pain, so the team carried him approximately 4km on foot to reach the waiting ambulance. He was admitted to hospital early morning — around 12 hours after the injury. Successful rescue.'},
   ],
   gear:[
     // ── Rope & Rigging ──
@@ -1142,14 +1142,16 @@ function getMemberHours(mid){
   });
   return{active:Math.round(active*100)/100,excused:Math.round(excused*100)/100,absentCount,excusedCount};
 }
+const LEADERBOARD_EXCLUDE_IDS=[21,22]; // Zaheer Pahad, Azhar Vadi — times no longer tracked; still shown everywhere else
 function renderHours(){
   const totalS=S.sessions.length,totalH=S.sessions.reduce((s,x)=>s+(x.hours||0),0);
-  const avgA=S.members.length?(S.members.reduce((s,m)=>s+getMemberHours(m.id).active,0)/S.members.length).toFixed(1):0;
+  const trackedMembers=S.members.filter(m=>!LEADERBOARD_EXCLUDE_IDS.includes(m.id));
+  const avgA=trackedMembers.length?(trackedMembers.reduce((s,m)=>s+getMemberHours(m.id).active,0)/trackedMembers.length).toFixed(1):0;
   document.getElementById('hoursStats').innerHTML=`
     <div class="stat-card"><div class="stat-number">${totalS}</div><div class="stat-label">Sessions</div></div>
     <div class="stat-card"><div class="stat-number">${totalH.toFixed(1)}</div><div class="stat-label">Total Hours</div></div>
     <div class="stat-card"><div class="stat-number">${avgA}</div><div class="stat-label">Avg Hrs/Member</div></div>`;
-  const ranked=[...S.members].map(m=>({...m,...getMemberHours(m.id)})).sort((a,b)=>b.active-a.active);
+  const ranked=trackedMembers.map(m=>({...m,...getMemberHours(m.id)})).sort((a,b)=>b.active-a.active);
   const maxH=ranked[0]?.active||1;
   const MEDALS=['🥇','🥈','🥉'],BCOLS=['#FFD700','#C0C0C0','#CD7F32','var(--green-b)'],RCLS=['rank-1','rank-2','rank-3','rank-other'];
   document.getElementById('leaderboard').innerHTML=!ranked.length?'<div style="color:var(--ink3)">No members.</div>':ranked.map((m,i)=>{
