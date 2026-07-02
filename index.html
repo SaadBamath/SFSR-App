@@ -1614,7 +1614,7 @@ function renderMatrix(){
 
   const rows=S.members.map(m=>{
     const cells=SKILLS.map((sk,i)=>{
-      const has=m.certs.some(c=>c===sk||c.toLowerCase().includes(sk.toLowerCase().slice(0,12)));
+      const has=m.certs.some(c=>c.toLowerCase().trim()===sk.toLowerCase().trim());
       return`<td><span class="${has?'matrix-yes':'matrix-no'}">${has?'✓':'·'}</span></td>`;
     }).join('');
     return`<tr>
