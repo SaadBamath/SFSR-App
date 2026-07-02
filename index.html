@@ -499,8 +499,8 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
       <div id="leaderboard"></div>
     </div>
     <div class="card" style="margin-bottom:20px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px">🎯 Leaderboard — Least Missions Missed</div>
-      <div style="font-size:11px;color:var(--ink3);margin-bottom:14px">Ranked by fewest missions missed (excused absences don't count against you)</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px">🎯 Leaderboard — Least Sessions Missed</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:14px">Across all missions, humanitarian relief, training and meetings — ranked by fewest missed (excused absences don't count against you)</div>
       <div id="leaderboardMissed"></div>
     </div>
     <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:12px">Session History</div>
@@ -1150,7 +1150,6 @@ function getMemberHours(mid){
 function getMemberMissionStats(mid){
   let total=0,missed=0,excused=0,attended=0;
   S.sessions.forEach(s=>{
-    if(s.type!=='mission')return;
     total++;
     const a=(S.attendance[s.id]||{})[mid];
     if(!a||a.status==='absent'){missed++;return;}
@@ -1192,11 +1191,11 @@ function renderHours(){
     </div>`;
   }).join('');
 
-  const missionTotal=S.sessions.filter(s=>s.type==='mission').length;
+  const sessionTotal=S.sessions.length;
   const rankedMissed=trackedMembers.map(m=>({...m,...getMemberMissionStats(m.id)}))
     .filter(m=>m.total>0)
     .sort((a,b)=>a.missed-b.missed||b.attended-a.attended);
-  document.getElementById('leaderboardMissed').innerHTML=!missionTotal?'<div style="color:var(--ink3)">No missions logged yet.</div>':!rankedMissed.length?'<div style="color:var(--ink3)">No members.</div>':rankedMissed.map((m,i)=>{
+  document.getElementById('leaderboardMissed').innerHTML=!sessionTotal?'<div style="color:var(--ink3)">No sessions logged yet.</div>':!rankedMissed.length?'<div style="color:var(--ink3)">No members.</div>':rankedMissed.map((m,i)=>{
     const ini=m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const pct=m.total?(m.attended/m.total*100):0;
     const rc=i<3?RCLS[i]:RCLS[3],bc=i<3?BCOLS[i]:BCOLS[3],lbl=i<3?MEDALS[i]:(i+1);
@@ -1210,7 +1209,7 @@ function renderHours(){
         </div>
         <div class="hours-bar-wrap"><div class="hours-bar-fill" style="width:${pct}%;background:${bc}"></div></div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:3px">
-          ${m.attended}/${m.total} missions attended
+          ${m.attended}/${m.total} sessions attended
           ${m.excused>0?`<span style="color:var(--amber)"> &nbsp;🟡 ${m.excused} excused</span>`:''}
         </div>
       </div>
