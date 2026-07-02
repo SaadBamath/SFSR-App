@@ -495,8 +495,13 @@ body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-
       </div>
     </div>
     <div class="card" style="margin-bottom:20px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:14px">🏆 Participation Leaderboard</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:14px">🏆 Leaderboard — By Hours</div>
       <div id="leaderboard"></div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px">🎯 Leaderboard — Least Missions Missed</div>
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:14px">Ranked by fewest missions missed (excused absences don't count against you)</div>
+      <div id="leaderboardMissed"></div>
     </div>
     <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:12px">Session History</div>
     <div id="sessionList"></div>
@@ -1142,6 +1147,18 @@ function getMemberHours(mid){
   });
   return{active:Math.round(active*100)/100,excused:Math.round(excused*100)/100,absentCount,excusedCount};
 }
+function getMemberMissionStats(mid){
+  let total=0,missed=0,excused=0,attended=0;
+  S.sessions.forEach(s=>{
+    if(s.type!=='mission')return;
+    total++;
+    const a=(S.attendance[s.id]||{})[mid];
+    if(!a||a.status==='absent'){missed++;return;}
+    if(a.status==='excused'){excused++;return;}
+    attended++;
+  });
+  return{total,missed,excused,attended};
+}
 const LEADERBOARD_EXCLUDE_IDS=[21,22]; // Zaheer Pahad, Azhar Vadi — times no longer tracked; still shown everywhere else
 function renderHours(){
   const totalS=S.sessions.length,totalH=S.sessions.reduce((s,x)=>s+(x.hours||0),0);
@@ -1170,6 +1187,31 @@ function renderHours(){
           ${m.excusedCount>0?`<span style="color:var(--amber)">🟡 ${m.excusedCount} session${m.excusedCount>1?'s':''} excused &nbsp;</span>`:''}
           ${m.absentCount>0?`<span style="color:var(--red)">❌ ${m.absentCount} session${m.absentCount>1?'s':''} missed</span>`:''}
           ${m.active===0&&m.excusedCount===0&&m.absentCount===0?'No sessions recorded':''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const missionTotal=S.sessions.filter(s=>s.type==='mission').length;
+  const rankedMissed=trackedMembers.map(m=>({...m,...getMemberMissionStats(m.id)}))
+    .filter(m=>m.total>0)
+    .sort((a,b)=>a.missed-b.missed||b.attended-a.attended);
+  document.getElementById('leaderboardMissed').innerHTML=!missionTotal?'<div style="color:var(--ink3)">No missions logged yet.</div>':!rankedMissed.length?'<div style="color:var(--ink3)">No members.</div>':rankedMissed.map((m,i)=>{
+    const ini=m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const pct=m.total?(m.attended/m.total*100):0;
+    const rc=i<3?RCLS[i]:RCLS[3],bc=i<3?BCOLS[i]:BCOLS[3],lbl=i<3?MEDALS[i]:(i+1);
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg2)">
+      <div class="rank-badge ${rc}">${lbl}</div>
+      <div class="member-avatar" style="width:34px;height:34px;font-size:12px">${ini}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-weight:600;font-size:14px">${m.name}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:13px;color:${m.missed===0?'var(--green)':'var(--red)'};font-weight:700">${m.missed} missed</span>
+        </div>
+        <div class="hours-bar-wrap"><div class="hours-bar-fill" style="width:${pct}%;background:${bc}"></div></div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);margin-top:3px">
+          ${m.attended}/${m.total} missions attended
+          ${m.excused>0?`<span style="color:var(--amber)"> &nbsp;🟡 ${m.excused} excused</span>`:''}
         </div>
       </div>
     </div>`;
